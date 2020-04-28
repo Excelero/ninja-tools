@@ -11,7 +11,7 @@ Tool | Purpose
 `nvmesh_for_each_drive.sh` | Check each individual drive in a NVMesh cluster
 
 #### ib_send_bw_all_to_1.sh: Check N-to-1 network congestion handling
-Takes a list of hosts (including mlx device and device port to use) as arguments and uses the first one in the list as the "1" in "N-to-1". The following hosts are the "N", meaning all following send data concurrently to the first one in the list through `ib_send_bw`. The resulting throughput numbers makes it easy to see if the congestion handling of a RoCE network has not been configured well.|
+Takes a list of hosts (including mlx device and device port to use) as arguments and uses the first one in the list as the "1" in "N-to-1". The following hosts are the "N", meaning all following send data concurrently to the first one in the list through `ib_send_bw`. The resulting throughput numbers makes it easy to see if the congestion handling of a RoCE network has not been configured well.
 #### ib_send_bw_all_to_all.sh: Check that each host can communicate with all other hosts
 Takes a list of hosts and establishes point to point connections from all given IP addresses to all other given IP addresses though `ib_send_bw`. The resulting numbers confirm connectivity and also that throughput meets the expected level.
 #### get_roce_throughput.sh: Show live throughput for RoCE interfaces of a host
