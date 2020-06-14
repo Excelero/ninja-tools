@@ -22,4 +22,5 @@ Helps to see if a network throughput limit is hit and to ensure that data is flo
 #### nvmesh_for_each_drive.sh: Check each individual drive in a NVMesh cluster
 Can create/attach a volume for each drive and then run an arbitrary command (e.g. time-based `fio`) for each single-drive volume to make sure the drive is behaving normal. The built-in help shows a `fio` example.
 #### fio_simple.sh: Simple wrapper for fio to test block device throughput, IOPS, latency
-The flexible I/O tester (`fio`) has a vast amount of options, which can easily be overwhelming. This is a simple wrapper for `fio` to test block device throughput, IOPS and latency based on Excelero's best practices.
+The flexible I/O tester (`fio`) has a vast amount of options, which can easily be overwhelming. This is a simple wrapper for `fio` to test block device throughput, IOPS and latency based on Excelero's best practices.  
+(This tool is also known as the `dorw` script in Excelero's best practices.)
