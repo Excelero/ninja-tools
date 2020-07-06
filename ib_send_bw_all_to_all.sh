@@ -14,6 +14,7 @@ WAIT_TIME_SECS=15 # Max time to wait for ib_send_bw service to become ready
 SSH_CMD="ssh -o LogLevel=ERROR -o ConnectTimeout=15 -o UserKnownHostsFile=/dev/null \
   -o StrictHostKeyChecking=no"
 DO_LOCAL_COMM=1 # 0 to skip ib_send_bw test with server and client being the same IP
+NUM_EXCHANGES=1000 # number of message exchanges (ib_send_bw -n)
 unset STDERR_TO_NULL # set by option "-m" to send stderr to /dev/null
 unset NUMA_BIND # set by option "-b" to use numactl for ib_send_bw
 unset BIDIRECTIONAL # set by option "-B" to run bidirectional "ib_send_bw -b"
@@ -44,6 +45,7 @@ usage()
   echo "              from a bad shell profile). Also mutes real errors, so run without"
   echo "              this option first."
   echo "  -B          Measure bidirectional throughput."
+  echo "  -n NUM      Number of message exchanges. (Default: 1000)"
   echo 
   echo "Examples:"
   echo "  $ $0 192.168.0.{1..4} 192.168.0.{11..14}"
@@ -57,7 +59,7 @@ parse_args()
 {
   local OPTIND # local to prevent effects from other subscripts
 
-  while getopts ":Bb:lms:t:" opt; do
+  while getopts ":Bb:lmn:s:t:" opt; do
     case "${opt}" in
       B)
         # Bidirectional measurement
@@ -74,6 +76,10 @@ parse_args()
       m)
         # Mute stderr for ssh commands
         STDERR_TO_NULL="2>/dev/null"
+        ;;
+      n)
+        # Number of message exchanges
+        NUM_EXCHANGES=${OPTARG}
         ;;
       s)
         # Size of message to exchange in bytes
@@ -135,7 +141,7 @@ do_each_to_each()
           exit 1; \
         fi; \
         ${NUMA_BIND} ib_send_bw -d \"\$device\" -i \"\$devport\" ${BIDIRECTIONAL} -F -R \
-          -s ${MSGSIZE} >/dev/null'"
+          -s ${MSGSIZE} -n ${NUM_EXCHANGES} >/dev/null'"
 
       eval ${to_cmd} ${STDERR_TO_NULL} &
       to_pid=$!
@@ -193,7 +199,7 @@ do_each_to_each()
           exit 1; \
         fi; \
         ${NUMA_BIND} ib_send_bw -d \"\$device\" -i \"\$devport\" ${BIDIRECTIONAL} -F -R \
-          -s ${MSGSIZE} ${to_ip} \
+          -s ${MSGSIZE} -n ${NUM_EXCHANGES} ${to_ip} \
           | grep \"^ ${MSGSIZE}\" | awk \"{ print \\\$4 }\" ' "
 
       from_cmd_out=`eval ${from_cmd} ${STDERR_TO_NULL}`
