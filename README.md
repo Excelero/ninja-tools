@@ -10,6 +10,7 @@ Tool | Purpose
 `get_ib_throughput.sh` | Show live throughput for InfiniBand interfaces of a host
 `nvmesh_for_each_drive.sh` | Check each individual drive in a NVMesh cluster
 `fio_simple.sh` | Simple wrapper for fio to test block device throughput, IOPS, latency
+`pcie_find_downgraded.sh`| Find PCIe devices with downgraded link speed/width
 
 #### ib_send_bw_all_to_1.sh: Check N-to-1 network congestion handling
 Takes a list of hosts (including mlx device and device port to use) as arguments and uses the first one in the list as the "1" in "N-to-1". The following hosts are the "N", meaning all following send data concurrently to the first one in the list through `ib_send_bw`. The resulting throughput numbers makes it easy to see if the congestion handling of a RoCE network has not been configured well.
@@ -24,3 +25,5 @@ Can create/attach a volume for each drive and then run an arbitrary command (e.g
 #### fio_simple.sh: Simple wrapper for fio to test block device throughput, IOPS, latency
 The flexible I/O tester (`fio`) has a vast amount of options, which can easily be overwhelming. This is a simple wrapper for `fio` to test block device throughput, IOPS and latency based on Excelero's best practices.  
 (This tool is also known as the `dorw` script in Excelero's best practices.)
+#### pcie_find_downgraded.sh: Find PCIe devices with downgraded link speed/width
+Queries existing PCIe devices via `lspci`, filtered to only include Mellanox NICs or NVMe drives, and shows devices for which the current PCIe link speed or link width does not match the device capabilities. This helps to identify devices that were put in the wrong slot or are not running at full link speed for other reasons.
