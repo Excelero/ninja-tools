@@ -115,8 +115,8 @@ while read -r dev_line; do
 	echo
   else
     # print only the ones where state is not equal to capabilities
-	if [ "$link_capable_width" != "$link_capable_width" ] || \
-	  [ "$link_capable_speed" != "$link_capable_speed" ]; then
+	if [ "$link_capable_width" != "$link_state_width" ] || \
+	  [ "$link_capable_speed" != "$link_state_speed" ]; then
 	  
       echo "${dev_description}:"
       echo "Capabilities:  $link_capable_width; $link_capable_speed"
