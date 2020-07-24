@@ -16,6 +16,7 @@ unset IODEPTH # iodepth for async io (set via cmd line arg)
 unset NUMJOBS # number of parallel jobs/processes (set via cmd line arg)
 unset READPERCENT # percentage of read accessed (set via cmd line arg
 unset BLOCKSIZE # block size for read/write (set via cmd line arg)
+unset RUNTIMESEC # runtime in seconds (set via cmd line arg)
 
 
 # Print usage info and exit
@@ -29,7 +30,7 @@ usage()
   echo "  https://github.com/axboe/fio"
   echo
   echo "Usage:"
-  echo "  $0 <DEVICE> <IODEPTH> <NUMJOBS> <READPERCENT> <BLOCKSIZE>"
+  echo "  $0 <DEVICE> <IODEPTH> <NUMJOBS> <READPERCENT> <BLOCKSIZE> <RUNTIMESEC>"
   echo
   echo "Mandatory Arguments:"
   echo "  DEVICE      Device name in /dev or NVMesh volume name in /dev/nvmesh."
@@ -39,14 +40,15 @@ usage()
   echo "  READPERCENT Percentage or read access. \"0\" means pure writing and \"100\""
   echo "              means pure reading."
   echo "  BLOCKSIZE   Block size of read/write accesses, e.g. \"4k\" or \"1m\"."
+  echo "  RUNTIMESEC  Benchmark runtime in seconds."
   echo
   echo "Examples:"
   echo "  Check read latency of NVMesh volume /dev/nvmesh/myvol:"
-  echo "    $ $0 myvol 1 1 100 4k"
+  echo "    $ $0 myvol 1 1 100 4k 20"
   echo "  Check read IOPS of device /dev/nvme0n1:"
-  echo "    $ $0 nvme0n1 16 16 100 4k"
+  echo "    $ $0 nvme0n1 16 16 100 4k 20"
   echo "  Check write throughput of volumes /dev/nvmesh/myvol1 and /dev/nvmesh/myvol2:"
-  echo "    $ $0 \"myvol1 myvol2\" 16 16 0 128k"
+  echo "    $ $0 \"myvol1 myvol2\" 16 16 0 128k 20"
 
   exit 1
 }
@@ -72,7 +74,7 @@ parse_args()
   shift $((OPTIND-1))
 
   # 5 here for the 5 mandatory args: DEVICE, IODEPTH etc
-  if [ $# -ne 5 ]; then
+  if [ $# -ne 6 ]; then
     echo "ERROR: Invalid number of arguments."
     usage
   fi
@@ -83,6 +85,7 @@ parse_args()
   NUMJOBS=$3 # number of parallel jobs/processes
   READPERCENT=$4 # percentage of read accessed
   BLOCKSIZE=$5 # block size for read/write
+  RUNTIMESEC=$6 # runtime in seconds
 }
 
 
@@ -108,8 +111,11 @@ prepare_fio_filenames()
   for dev in $DEVICE; do
     if [ -e /dev/nvmesh/$dev ]; then
       FILENAMES+=("--filename=/dev/nvmesh/$dev")
-    else
+    elif [ -e /dev/$dev ]; then
       FILENAMES+=("--filename=/dev/$dev")
+	else
+	  echo "ERROR: Given device name not found in /dev or /dev/nvmesh."
+	  exit 1
     fi
   done
 }
@@ -135,7 +141,7 @@ prepare_fio_rwmix
 
 fio_cmd="$FIO_PATH ${FILENAMES[@]} --iodepth=$IODEPTH --numjobs=$NUMJOBS $RWMIXREAD "
 fio_cmd+="--bs=$BLOCKSIZE --direct=1 --norandommap --randrepeat=0 --verify=0 "
-fio_cmd+="--ioengine=libaio --group_reporting --name=fio_simple --time_based --runtime=600"
+fio_cmd+="--ioengine=libaio --group_reporting --name=fio_simple --time_based --runtime=$RUNTIMESEC"
 
 echo "FIO COMMAND: $fio_cmd"
 echo
