@@ -108,16 +108,25 @@ prepare_fio_filenames()
 {
   FILENAMES=()
 
+  local WARN_NOT_FOUND=() # to warn only once instead of for each file
+
+  # if dev is not found in /dev or /dev/nvmesh, we fall back to assuming it is an absolute path
+  # (which might be intended e.g. to test fio with files instead)
   for dev in $DEVICE; do
     if [ -e /dev/nvmesh/$dev ]; then
       FILENAMES+=("--filename=/dev/nvmesh/$dev")
     elif [ -e /dev/$dev ]; then
       FILENAMES+=("--filename=/dev/$dev")
-	else
-	  echo "ERROR: Given device name not found in /dev or /dev/nvmesh."
-	  exit 1
+    else
+      FILENAMES+=("--filename=$dev")
+      WARN_NOT_FOUND+=("$dev")
     fi
   done
+
+  if [ ${#WARN_NOT_FOUND[@]} -gt 0 ]; then
+    echo "NOTE: Some given names were not found in /dev and /dev/nvmesh. Using" \
+      "them without prefix instead: ${WARN_NOT_FOUND[@]}"
+  fi
 }
 
 # Prepare fio "--rwmixread". For 100% read, use "--rw=randread" to avoid fio complaining about
