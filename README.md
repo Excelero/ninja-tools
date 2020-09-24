@@ -27,3 +27,5 @@ The flexible I/O tester (`fio`) has a vast amount of options, which can easily b
 (This tool is also known as the `dorw` script in Excelero's best practices.)
 #### pcie_find_downgraded.sh: Find PCIe devices with downgraded link speed/width
 Queries existing PCIe devices via `lspci`, filtered to only include Mellanox NICs or NVMe drives, and shows devices for which the current PCIe link speed or link width does not match the device capabilities. This helps to identify devices that were put in the wrong slot or are not running at full link speed for other reasons.
+#### nvmesh_memory_monitor.sh: Monitor the NVMesh related memory 
+When running the nvmesh_memory_monitor.sh, a CSV file will be created under /var/log/`hostname`-nvmesh-memory.csv. The content of the file can be then imported into programs like MS Excel (with delimiter options of comma and space) and a memory graf can be easily created.
