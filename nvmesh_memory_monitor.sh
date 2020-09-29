@@ -28,7 +28,7 @@ usage()
 
 parse_args()
 {
-  while getopts ":to:" opt; do
+  while getopts ":t:o:" opt; do
     case "${opt}" in
       t)
         time_interval=${OPTARG}
