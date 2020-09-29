@@ -9,6 +9,7 @@ Tool | Purpose
 `get_roce_throughput.sh` | Show live throughput for RoCE interfaces of a host
 `get_ib_throughput.sh` | Show live throughput for InfiniBand interfaces of a host
 `nvmesh_for_each_drive.sh` | Check each individual drive in a NVMesh cluster
+`nvmesh_memory_monitor.sh` | Monitor NVMesh related memory
 `fio_simple.sh` | Simple wrapper for fio to test block device throughput, IOPS, latency
 `pcie_find_downgraded.sh`| Find PCIe devices with downgraded link speed/width
 
@@ -22,6 +23,8 @@ Helps to see if a network throughput limit is hit and to ensure that data is flo
 Helps to see if a network throughput limit is hit and to ensure that data is flowing the way it is supposed to flow, e.g. nicely balanced across multiple interfaces. Reads port data counters in `/sys/class/infiniband`.
 #### nvmesh_for_each_drive.sh: Check each individual drive in a NVMesh cluster
 Can create/attach a volume for each drive and then run an arbitrary command (e.g. time-based `fio`) for each single-drive volume to make sure the drive is behaving normal. The built-in help shows a `fio` example.
+#### nvmesh_memory_monitor.sh: Monitor the NVMesh related memory 
+When running the nvmesh_memory_monitor.sh, a CSV file will be created under /var/log/`hostname`-nvmesh-memory.csv. The content of the file can be then imported into programs like MS Excel (with delimiter options of comma and space) and a memory graf can be easily created.
 #### fio_simple.sh: Simple wrapper for fio to test block device throughput, IOPS, latency
 The flexible I/O tester (`fio`) has a vast amount of options, which can easily be overwhelming. This is a simple wrapper for `fio` to test block device throughput, IOPS and latency based on Excelero's best practices.  
 (This tool is also known as the `dorw` script in Excelero's best practices.)
