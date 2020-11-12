@@ -10,6 +10,7 @@ Tool | Purpose
 `get_ib_throughput.sh` | Show live throughput for InfiniBand interfaces of a host
 `nvmesh_for_each_drive.sh` | Check each individual drive in a NVMesh cluster
 `nvmesh_memory_monitor.sh` | Monitor NVMesh related memory
+`nvmesh_update_RO_fs` | Switch easily between shared read only mount to exclusive read write mount modes
 `fio_simple.sh` | Simple wrapper for fio to test block device throughput, IOPS, latency
 `pcie_find_downgraded.sh`| Find PCIe devices with downgraded link speed/width
 
@@ -30,6 +31,10 @@ Can create/attach a volume for each drive and then run an arbitrary command (e.g
 
 #### nvmesh_memory_monitor.sh: Monitor the NVMesh related memory 
 When running the nvmesh_memory_monitor.sh, a CSV file will be created under /var/log/`hostname`-nvmesh-memory.csv. The content of the file can be imported into programs like MS Excel (with delimiter options of comma and space) and a memory graph can be easily created.
+
+#### nvmesh_update_RO_fs: Switch easily between shared read only mount to exclusive read write mount modes
+This script is orchestating the flow of updating a shared read only file system data.
+It will umount all of the read-only mounted clients and mount it as read write on the desired client - and the opposite
 
 #### fio_simple.sh: Simple wrapper for fio to test block device throughput, IOPS, latency
 The flexible I/O tester (`fio`) has a vast amount of options, which can easily be overwhelming. This is a simple wrapper for `fio` to test block device throughput, IOPS and latency based on Excelero's best practices.  
