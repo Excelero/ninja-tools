@@ -1,0 +1,200 @@
+#!/bin/bash
+#
+# This script is orchestating the flow of updating a shared read only file system data.
+# It will umount all of the read-only mounted clients and mount it as read write on the desired client - and the opposite
+#
+
+
+# Defaults
+RO2RW=0
+RW2RO=0
+CONF_PATH="/etc/opt/NVMesh/nvmesh_update_RO_fs.conf"
+UMOUNT_CMD="sudo umount "
+DETACH_CMD="sudo nvmesh_detach_volumes "
+ATTACH_RO_CMD="sudo nvmesh_attach_volumes -p --access SHARED_READ_ONLY "
+MOUNT_RO_CMD=" sudo mount -o ro "
+ATTACH_RW_CMD="sudo nvmesh_attach_volumes -p --access EXCLUSIVE_READ_WRITE "
+MOUNT_RW_CMD=" sudo mount -o rw "
+CLIENT_SHOW_CMD="nvmesh client show --output-format tabular"
+MOUNT_PATH="/proc/mounts "
+
+# Print usage info and exit
+usage()
+{
+  echo "About:"
+  echo "  This script is orchestating the flow of updating a shared read only file system data."
+  echo "  It will umount all of the read-only mounted clients and mount it as read write on the desired client - and the opposite" 
+  echo
+  echo "Usage:"
+  echo "  $0 <Mode> [Node] "
+  echo
+  echo "Modes:"
+  echo "  -r          Unmount the R/W unique client and mount the RO clients."
+  echo "  -w          Unmount the RO clients and mount the R/W unique client."
+  echo
+  echo "Node:"
+  echo "  -n STRING   client to use as unique writter. (Default: localhost)"
+  echo 
+  echo "Examples:"
+  echo "  $ $0 -w"
+  echo "  $ $0 -w -n 10.0.0.1"
+  echo "  $ $0 -r"
+  echo
+  echo "Node:"
+  echo "  * This script assume a valid SSH connection to each one of the clients defined in $CONF_PATH" 
+  echo "  * 'volume_name', 'mount_point' & 'client_list' should be configured in $CONF_PATH"
+  echo "  * The user must have SUDO permissions (also over SSH)"
+
+  exit 1
+}
+
+parse_args()
+{
+  local OPTIND # local to prevent effects from other subscripts
+
+  if [ $# -eq 0 ]; then
+    echo "ERROR: No mode selected."
+    usage
+  fi
+
+  while getopts ":rwn:" opt; do
+    case "${opt}" in
+      r)
+        # RW -> RO
+	RW2RO=1
+        ;;
+      w)
+        # RO -> RW
+	RO2RW=1
+        ;;
+      n)
+        # Remote writter
+        REMOTE_WRITTER=${OPTARG}
+        ;;
+      *)
+        # Other option arguments are invalid
+        usage
+        ;;
+    esac
+  done
+
+  shift $((OPTIND-1))
+}
+
+check_root()
+{
+  prompt=$(sudo -nv 2>&1)
+  if [ $? -ne 0 ]; then
+    # exit code of sudo-command is 0
+    echo "Root or Sudo  access required for script ( $(basename $0) )"
+    exit
+  fi
+}
+
+check_conf()
+{
+  if test -f $CONF_PATH ; then
+    . $CONF_PATH
+    echo "Configuration loaded:"
+    echo "	volume_name=$volume_name"
+    echo "	mount_point=$mount_point"
+    echo "	client_list=${client_list[@]}"
+  else
+    echo "Configuration file does not exist and required for script ( $(basename $0) )"
+    echo
+    echo "Example of configuration file under $CONF_PATH:"
+    echo "	volume_name=\"<volume name>\""
+    echo "	mount_point=\"<mountpoint>\""
+    echo "	client_list=(\"<client1>\" \"client2\" ...)"
+    echo
+
+    exit 1
+  fi
+}
+
+run_cmd_on_remote_client(){
+  cmd="$@"
+  cmd_with_ssh="ssh $client \" $cmd \""
+  output=`eval $cmd_with_ssh 2>&1 > /dev/null`
+  if [[ $? -ne 0 ]]; then
+    echo "ERROR - while running $cmd_with_ssh"
+    echo 
+  fi
+}
+
+run_cmd(){
+  cmd=$@
+  output=`eval $cmd`
+  if [[ $? -ne 0 ]]; then
+    echo "ERROR - while running $cmd"
+    echo 
+  fi
+}
+
+check_volume_not_attached(){
+  error=0
+    cmd=$CLIENT_SHOW_CMD
+    output=`eval $cmd`
+    if [[ $? -ne 0 ]]; then
+      error=1
+      echo "ERROR - while running $cmd"
+      echo
+    elif echo "$output" | grep -q "$volume_name"; then
+      echo "ERROR - $volume_name is still attached"
+      echo
+    fi
+
+  if [[ $error -ne 0 ]]; then
+    exit 1
+  fi
+}
+
+umount_all()
+{
+  for client in ${client_list[@]}; do
+    if ssh $client grep -qs $mount_point $MOUNT_PATH; then
+      run_cmd_on_remote_client "$UMOUNT_CMD $mount_point"
+    fi
+    run_cmd_on_remote_client "$DETACH_CMD $volume_name"
+  done
+
+  check_volume_not_attached
+}
+
+RO_mount_all()
+{
+  check_volume_not_attached
+
+  for client in ${client_list[@]}; do
+    run_cmd_on_remote_client "$ATTACH_RO_CMD $volume_name"
+    run_cmd_on_remote_client "$MOUNT_RO_CMD $mount_point"
+  done
+}
+
+RW_mount()
+{
+  check_volume_not_attached
+
+  if [ -n "$REMOTE_WRITTER" ]; then
+    client=$REMOTE_WRITTER
+    run_cmd_on_remote_client "$ATTACH_RW_CMD $volume_name"
+    run_cmd_on_remote_client "$MOUNT_RW_CMD $mount_point"
+  else
+    run_cmd "$ATTACH_RW_CMD $volume_name"
+    run_cmd "$MOUNT_RW_CMD $mount_point"
+  fi
+}
+
+parse_args "$@"
+check_conf
+
+if [ "$RW2RO" -eq 1 ]; then
+  umount_all
+  RO_mount_all
+fi
+
+
+if [ "$RO2RW" -eq 1 ]; then
+  umount_all
+  RW_mount
+fi
