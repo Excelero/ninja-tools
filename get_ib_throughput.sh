@@ -41,7 +41,7 @@ parse_args()
   while getopts ":hmst:" opt; do
     case "${opt}" in
       m)
-        # Single run instead of infinite loop
+        # Separate lines for rx and tx of each interface
         multiline=1
         ;;
       s)
